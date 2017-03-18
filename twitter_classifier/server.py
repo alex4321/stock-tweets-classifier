@@ -4,20 +4,21 @@ import json
 import logging
 import os
 import sys
+import traceback
 from tornado.platform.asyncio import AsyncIOMainLoop
 from tornado.web import Application, RequestHandler
 from .logic import Configuration, AppLogic
 
 
-async def main():
-    config = Configuration.from_file("config.json")
-    logic = AppLogic(config)
-    await logic.initialize()
-    stock_id = await logic.classify_stock_tweets("TWTR")
-    now = datetime.datetime.now()
-    start = now - datetime.timedelta(days=10)
-    print(await logic.stock_stats(stock_id, start, now, False))
-    print(await logic.stock_stats(stock_id, start, now, True))
+#async def main():
+#    config = Configuration.from_file("config.json")
+#    logic = AppLogic(config)
+#    await logic.initialize()
+#    stock_id = await logic.classify_stock_tweets("TWTR")
+#    now = datetime.datetime.now()
+#    start = now - datetime.timedelta(days=10)
+#    print(await logic.stock_stats(stock_id, start, now, False))
+#    print(await logic.stock_stats(stock_id, start, now, True))
 
 
 class JsonRequestHandler(RequestHandler):
@@ -38,6 +39,7 @@ class JsonRequestHandler(RequestHandler):
             self.send_answer({"success": True, "response": result})
         except Exception as err:
             self.send_answer({"success": False})
+            traceback.print_exc()
 
     async def _get(self):
         raise NotImplementedError()
