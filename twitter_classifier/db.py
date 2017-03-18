@@ -249,7 +249,14 @@ async def stock_stats(stock_id, from_time, to_time):
               "  ) subQuery "
         return (await cur.mogrify(sql, [from_time, to_time, stock_id])).decode("utf-8")
 
-    return (await _query(_builder, _fetchall))[0]
+    positive, negative, neutral = (await _query(_builder, _fetchall))[0]
+    if positive is None:
+        positive = 0
+    if negative is None:
+        negative = 0
+    if neutral is None:
+        neutral = 0
+    return positive, negative, neutral
 
 
 async def whitelist_hashtags():
