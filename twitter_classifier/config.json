@@ -1,13 +1,13 @@
 {
   "twitter": {
-    "consumer_key": "9G2FZDSELRnIrb36z3vtISdYv",
-    "consumer_secret": "FbXgQwnoWkytT2AI051qg8w7DZSK2X5xt8RT9D9ICn8sUFA0nR",
-    "access_token": "809428770394435585-yeOT2iABUE2iNXy5zYHQQUB6sDMhJuE",
-    "access_token_secret": "xbRgyam8w65Vc62M8bQrhCD11DacsieYxMcr3lQpNmFjm"
+    "consumer_key": "Your",
+    "consumer_secret": "Your",
+    "access_token": "Your",
+    "access_token_secret": "Your"
   },
   "nlc": {
-    "username": "31e64def-e88f-4c33-b6d1-48a42c16122b",
-    "password": "2185mlwktt1Q",
+    "username": "Your",
+    "password": "Your",
     "classifiers": ["f5bbbbx174-nlc-6343", "f5bbbcx175-nlc-6410", "f5bbbcx175-nlc-6409"],
     "text_per_block": 10
   },
