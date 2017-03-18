@@ -1,6 +1,6 @@
 CREATE TABLE stocks
 (
-    id INTEGER DEFAULT nextval('stocks_id_seq'::regclass) PRIMARY KEY NOT NULL,
+    id SERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(256),
     filter VARCHAR(256)
 );
@@ -8,15 +8,15 @@ CREATE UNIQUE INDEX stocks_name_uindex ON stocks (name);
 CREATE UNIQUE INDEX stocks_filter_uindex ON stocks (filter);
 CREATE TABLE tweet_texts
 (
-    id INTEGER DEFAULT nextval('tweet_texts_id_seq'::regclass) PRIMARY KEY NOT NULL,
+    id SERIAL PRIMARY KEY NOT NULL,
     text TEXT,
     classification VARCHAR(20)
 );
 CREATE UNIQUE INDEX tweet_texts_text_uindex ON tweet_texts (text);
 CREATE TABLE tweets
 (
-    id INTEGER DEFAULT nextval('tweets_id_seq'::regclass) PRIMARY KEY NOT NULL,
-    uid BIGINT,
+    id SERIAL PRIMARY KEY NOT NULL,
+    uid bigint,
     text INTEGER,
     time TIMESTAMP,
     CONSTRAINT tweets_tweet_texts_id_fk FOREIGN KEY (text) REFERENCES tweet_texts (id)
@@ -30,7 +30,7 @@ CREATE TABLE tweets_stocks
 );
 CREATE TABLE users
 (
-    id INTEGER DEFAULT nextval('users_id_seq'::regclass) PRIMARY KEY NOT NULL,
+    id bigint PRIMARY KEY NOT NULL,
     k DOUBLE PRECISION
 );
 CREATE TABLE whitelist_hashtags
