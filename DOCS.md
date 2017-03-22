@@ -69,7 +69,8 @@ Config file is a JSON with structure like next:
     "consumer_key": "ConsumerKey",
     "consumer_secret": "ConsumerSecret",
     "access_token": "AccessToken",
-    "access_token_secret": "AccessTokenSecret"
+    "access_token_secret": "AccessTokenSecret",
+    "user_filter_per_request": 10
   },
   "nlc": {
     "username": "Username",
@@ -84,6 +85,7 @@ Config file is a JSON with structure like next:
 ```
 Where:
 - twitter - twitter app auth data. See it in [https://apps.twitter.com](https://apps.twitter.com)
+- twitter.user_filter_per_request - see "user filtering" paragraph
 - nlc.username, nlc.password - Watson NLC service creditentials
 - nlc.classifiers - array of classifier ID's
 - nlc.text_per_block - I try to classify tweets by "batches", there is batch count. 
@@ -224,3 +226,15 @@ E.g. we have ~= 100 users in users table and we process request:
 - TWTR $FROM_USERS$
 so it'll be converted in
 - TWTR AND (from:user1 OR from:user2 ... OR from:user100)
+So:
+- ```TWTR``` request will load all tweets about TWTR
+- ```TWTR $FROM_USERS$``` will load tweets about TWTR from users from our table
+
+Also, about configuration - you can see "user_filter_per_request" option.
+I used it bacause for user tweets filtering:
+- I can add all users naqmes in filter before call Twitter API - but it can cause problems with processing
+- I can download all tweets and filter on my side. Not too effective
+- I can make next:
+  - split user filters to bacthes
+  - download batch-related TWTR tweets
+  - store all downloaded tweets

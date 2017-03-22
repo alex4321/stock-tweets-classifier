@@ -3,7 +3,8 @@
     "consumer_key": "Your",
     "consumer_secret": "Your",
     "access_token": "Your",
-    "access_token_secret": "Your"
+    "access_token_secret": "Your",
+    "user_filter_per_request": 10
   },
   "nlc": {
     "username": "Your",

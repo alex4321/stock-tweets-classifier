@@ -21,6 +21,7 @@ class Configuration:
             self.consumer_secret = config["consumer_secret"]
             self.access_token = config["access_token"]
             self.access_token_secret = config["access_token_secret"]
+            self.user_filter_per_request = config["user_filter_per_request"]
 
     class _NlcConfiguration:
         def __init__(self, config):
@@ -142,7 +143,6 @@ class AppLogic:
         async def _filter_tweets_download(filters, tweets):
             request = stock_filter.replace(AppLogic.FROM_USERS_FILTER, "") \
                       + " AND (" + " OR ".join(filters) + ")"
-            print(request)
             real_tweets = await twitter.search(request,
                                                db.all_classified_previously,
                                                lambda text: _replace_whitelist(whitelist, text))
@@ -154,7 +154,7 @@ class AppLogic:
 
         if AppLogic.FROM_USERS_FILTER in stock_filter:
             users_filters = await db.from_users_filter()
-            filter_per_block = 10
+            filter_per_block = self.configuration.twitter.user_filter_per_request
             block_count = math.ceil(len(users_filters) / filter_per_block)
             tweets = []
             tasks = []
