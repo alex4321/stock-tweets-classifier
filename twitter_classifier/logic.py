@@ -132,6 +132,41 @@ class AppLogic:
                 await All(tasks)
         return text_classification_results
 
+    async def _get_stock_tweets(self, stock_filter):
+        def _replace_whitelist(whitelist, text):
+            text = text.lower()
+            for tag in whitelist:
+                text = text.replace("#" + tag, "")
+            return text
+
+        async def _filter_tweets_download(filters, tweets):
+            request = stock_filter + " AND (" + " OR ".join(filters) + ")"
+            print(request)
+            real_tweets = await twitter.search(request,
+                                               db.all_classified_previously,
+                                               lambda text: _replace_whitelist(whitelist, text))
+            for tweet in real_tweets:
+                tweets.append(tweet)
+
+        whitelist = await db.whitelist_hashtags()
+        twitter = self.twitter_client()
+
+        if AppLogic.FROM_USERS_FILTER in stock_filter:
+            users_filters = await db.from_users_filter()
+            filter_per_block = 5
+            block_count = math.ceil(len(users_filters) / filter_per_block)
+            tweets = []
+            tasks = []
+            for block in range(0, block_count):
+                block_filters = users_filters[block * filter_per_block : block * (filter_per_block + 1)]
+                tasks.append(_filter_tweets_download(block_filters, tweets))
+            await All(tasks)
+        else:
+            tweets = await twitter.search(stock_filter,
+                                          db.all_classified_previously,
+                                          lambda text: _replace_whitelist(whitelist, text))
+        return tweets
+
     async def classify_stock_tweets(self, stock_filter):
         """
         Classify tweets for stock with given filter
@@ -140,29 +175,9 @@ class AppLogic:
         :return: stock id
         :rtype: int
         """
-        def _replace_whitelist(whitelist, text):
-            text = text.lower()
-            for tag in whitelist:
-                text = text.replace("#" + tag, "")
-            return text
-
         # Get new tweets
         logging.info("Classifying new tweets from {0}".format(stock_filter))
-        whitelist = await db.whitelist_hashtags()
-        twitter = self.twitter_client()
-
-        if AppLogic.FROM_USERS_FILTER in stock_filter:
-            users_filters = await db.from_users_filter()
-            tweets = []
-            for filter in users_filters:
-                user_stock_filter = stock_filter.replace(AppLogic.FROM_USERS_FILTER, "") + " " + filter
-                tweets += await twitter.search(user_stock_filter,
-                                               db.all_classified_previously,
-                                               lambda text: _replace_whitelist(whitelist, text))
-        else:
-            tweets = await twitter.search(stock_filter,
-                                          db.all_classified_previously,
-                                          lambda text: _replace_whitelist(whitelist, text))
+        tweets = self._get_stock_tweets(stock_filter)
         logging.info("Downloaded {0} new tweets".format(len(tweets)))
         texts_to_ids, tweet_ids = await db.store_tweets(tweets)
         texts = list(texts_to_ids.keys())
