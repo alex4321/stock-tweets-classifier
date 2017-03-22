@@ -285,4 +285,4 @@ async def from_users_filter():
                      await _query(_builder, _fetchall)))
     user_filters = map(lambda name: "from:{0}".format(name),
                        users)
-    return user_filters
+    return list(user_filters)
