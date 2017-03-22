@@ -140,7 +140,8 @@ class AppLogic:
             return text
 
         async def _filter_tweets_download(filters, tweets):
-            request = stock_filter + " AND (" + " OR ".join(filters) + ")"
+            request = stock_filter.replace(AppLogic.FROM_USERS_FILTER, "") \
+                      + " AND (" + " OR ".join(filters) + ")"
             print(request)
             real_tweets = await twitter.search(request,
                                                db.all_classified_previously,
