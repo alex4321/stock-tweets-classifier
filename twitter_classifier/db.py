@@ -119,6 +119,8 @@ async def find_texts(texts):
         return sql
 
     result = {}
+    if len(texts) == 0:
+        return {}
     sql_answer = await _query(_builder, _fetchall)
     for text_id, text in sql_answer:
         result[text] = text_id
