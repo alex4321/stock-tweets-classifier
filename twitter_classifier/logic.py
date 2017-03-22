@@ -153,6 +153,10 @@ class AppLogic:
         twitter = self.twitter_client()
 
         if AppLogic.FROM_USERS_FILTER in stock_filter:
+            # if we'll download only whitelisted user tweets
+            # we'll make request to Twitter API with users filter ("AND (from:$user1 OR from:$user2... )").
+            # but we'll  need to split it in few batches - e.g. I tryed to add 129 users and got error).
+            # so we build multiple batches that loading tweets and wait for all batch finishing
             users_filters = await db.from_users_filter()
             filter_per_block = self.configuration.twitter.user_filter_per_request
             block_count = math.ceil(len(users_filters) / filter_per_block)
@@ -173,7 +177,8 @@ class AppLogic:
     async def classify_stock_tweets(self, stock_filter):
         """
         Classify tweets for stock with given filter
-        :param stock_filter: stock filter (e.g. "AAPL")
+        :param stock_filter: stock filter (e.g. "AAPL"). \
+          May contain $FROM_USERS$ to limit by only "registered" users (see users table)
         :type stock_filter: str
         :return: stock id
         :rtype: int
