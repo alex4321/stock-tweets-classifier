@@ -146,17 +146,23 @@ class AppLogic:
                 text = text.replace("#" + tag, "")
             return text
 
-        if AppLogic.FROM_USERS_FILTER in stock_filter:
-            users_filter = "AND " + await db.from_users_filter()
-            stock_filter = stock_filter.replace(AppLogic.FROM_USERS_FILTER, users_filter)
-
         # Get new tweets
         logging.info("Classifying new tweets from {0}".format(stock_filter))
         whitelist = await db.whitelist_hashtags()
         twitter = self.twitter_client()
-        tweets = await twitter.search(stock_filter,
-                                      db.all_classified_previously,
-                                      lambda text: _replace_whitelist(whitelist, text))
+
+        if AppLogic.FROM_USERS_FILTER in stock_filter:
+            users_filters = await db.from_users_filter()
+            tweets = []
+            for filter in users_filters:
+                user_stock_filter = stock_filter.replace(AppLogic.FROM_USERS_FILTER, "") + " " + filter
+                tweets += await twitter.search(user_stock_filter,
+                                               db.all_classified_previously,
+                                               lambda text: _replace_whitelist(whitelist, text))
+        else:
+            tweets = await twitter.search(stock_filter,
+                                          db.all_classified_previously,
+                                          lambda text: _replace_whitelist(whitelist, text))
         logging.info("Downloaded {0} new tweets".format(len(tweets)))
         texts_to_ids, tweet_ids = await db.store_tweets(tweets)
         texts = list(texts_to_ids.keys())
