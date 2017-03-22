@@ -144,6 +144,8 @@ async def store_tweets(tweets):
         return "INSERT INTO tweets (uid, time, text) VALUES " + \
                ",".join(values) + " RETURNING tweets.id"
 
+    if len(tweets) == 0:
+        return {}, []
     texts = [tweet[0] for tweet in tweets]
     await store_texts(texts)
     text_ids = await find_texts(texts)
