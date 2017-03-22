@@ -169,7 +169,8 @@ async def update_classification(classifications):
             subsqls.append(subsql)
         return ";".join(subsqls)
 
-    await _query(_builder)
+    if len(classifications) != 0:
+        await _query(_builder)
 
 
 async def stock_by_filter(stock_filter):
