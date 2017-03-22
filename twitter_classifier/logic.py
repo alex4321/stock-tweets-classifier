@@ -177,7 +177,7 @@ class AppLogic:
         """
         # Get new tweets
         logging.info("Classifying new tweets from {0}".format(stock_filter))
-        tweets = self._get_stock_tweets(stock_filter)
+        tweets = await self._get_stock_tweets(stock_filter)
         logging.info("Downloaded {0} new tweets".format(len(tweets)))
         texts_to_ids, tweet_ids = await db.store_tweets(tweets)
         texts = list(texts_to_ids.keys())
