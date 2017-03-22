@@ -159,7 +159,7 @@ class AppLogic:
             tasks = []
             loop = asyncio.get_event_loop()
             for block in range(0, block_count):
-                block_filters = users_filters[block * filter_per_block : (block + 1) * filter_per_block]
+                block_filters = users_filters[block * filter_per_block: (block + 1) * filter_per_block]
                 task = loop.create_task(_filter_tweets_download(block_filters, tweets))
                 tasks.append(task)
             await All(tasks)
