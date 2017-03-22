@@ -238,3 +238,6 @@ I used it bacause for user tweets filtering:
   - split user filters to bacthes
   - download batch-related TWTR tweets
   - store all downloaded tweets
+So with this params it send multiple request to twitter (one for each user "block") in same time and wait for all request finishing.
+So with lesser value - we'll have many requests. So it'll be longer (because of connection pool size).
+But with big value (e.g. 50 users in same block) we'll have errors with request building. I tested it with values ~= 10.
