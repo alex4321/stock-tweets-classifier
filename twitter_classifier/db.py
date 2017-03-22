@@ -270,3 +270,19 @@ async def whitelist_hashtags():
 
     return list(map(lambda row: row[0],
                     await _query(_builder, _fetchall)))
+
+
+async def from_users_filter():
+    """
+    Return user filter
+    :return: user filter (e.g. "(from:alex4321 OR from:ibm)")
+    :rtype: str
+    """
+    async def _builder(cur):
+        return "SELECT name FROM users"
+
+    users = list(map(lambda row: row[0],
+                     await _query(_builder, _fetchall)))
+    user_filters = map(lambda name: "from:{0}".format(name),
+                       users)
+    return "(" + " OR ".join(list(user_filters)) + ")"

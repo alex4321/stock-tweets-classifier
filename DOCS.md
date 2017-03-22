@@ -40,7 +40,7 @@ DB have next stucture
 - stocks (store stock name/filters (or - only filter if user sended custom filter text))
     - id - stock key
     - name - unique name of stock or NULL (for user custom filters).
-    - filter - Twitter search request. E.g. - ("AAPL" for $AAPL)
+    - filter - Twitter search request. E.g. - ("AAPL" for $AAPL). Also see "user filtering" paragraph.
 - tweet_texts - store unique texts (separeted to avoid storing and reclassification of duplicates)
     - id - key
     - text - cleaned tweet text
@@ -55,6 +55,7 @@ DB have next stucture
     - stock - stock key
 - users - users 
     - id - key (same as twitter user id)
+    - name - user name (e.g. "ibm" for "https://twitter.com/ibm")
     - k - cooficient to change user tweets weight (during calculation of "total" results)
 - whitelist of  hashtags - whitelist_hashtags
     - tag - tag name. E.g. - you need to replace "#yield" tag to "yield" word - so tag='yield'
@@ -215,3 +216,11 @@ I tested accuracy on individual classifiers on
   - negative-positive classifier: 160 of 712 ~= 22%
 - when test finished - calculated error of ensemble classifier:
   256 errors on 1097 texts ~= 23%
+
+User filtering
+==============
+You can add "$FROM_USERS$" to stock filter.
+E.g. we have ~= 100 users in users table and we process request:
+- TWTR $FROM_USERS$
+so it'll be converted in
+- TWTR AND (from:user1 OR from:user2 ... OR from:user100)

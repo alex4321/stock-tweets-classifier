@@ -54,6 +54,8 @@ class AppLogic:
     """
     Application logic class
     """
+    FROM_USERS_FILTER = "$FROM_USERS$"
+
     def __init__(self, configuration):
         """
         :param configuration: configuration object
@@ -143,6 +145,10 @@ class AppLogic:
             for tag in whitelist:
                 text = text.replace("#" + tag, "")
             return text
+
+        if AppLogic.FROM_USERS_FILTER in stock_filter:
+            users_filter = "AND " + await db.from_users_filter()
+            stock_filter = stock_filter.replace(AppLogic.FROM_USERS_FILTER, users_filter)
 
         # Get new tweets
         logging.info("Classifying new tweets from {0}".format(stock_filter))

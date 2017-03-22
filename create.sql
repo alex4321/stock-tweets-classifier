@@ -31,6 +31,7 @@ CREATE TABLE tweets_stocks
 CREATE TABLE users
 (
     id bigint PRIMARY KEY NOT NULL,
+    name VARCHAR(256),
     k DOUBLE PRECISION
 );
 CREATE TABLE whitelist_hashtags
