@@ -154,7 +154,7 @@ class AppLogic:
 
         if AppLogic.FROM_USERS_FILTER in stock_filter:
             users_filters = await db.from_users_filter()
-            filter_per_block = 5
+            filter_per_block = 10
             block_count = math.ceil(len(users_filters) / filter_per_block)
             tweets = []
             tasks = []
