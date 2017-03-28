@@ -144,8 +144,7 @@ class AppLogic:
             request = stock_filter.replace(AppLogic.FROM_USERS_FILTER, "") \
                       + " AND (" + " OR ".join(filters) + ")"
             real_tweets = await twitter.search(request,
-                                               db.all_classified_previously,
-                                               lambda text: _replace_whitelist(whitelist, text))
+                                               text_preprocessor=lambda text: _replace_whitelist(whitelist, text))
             for tweet in real_tweets:
                 tweets.append(tweet)
 
@@ -170,23 +169,27 @@ class AppLogic:
             await All(tasks)
         else:
             tweets = await twitter.search(stock_filter,
-                                          db.all_classified_previously,
-                                          lambda text: _replace_whitelist(whitelist, text))
+                                          text_preprocessor=lambda text: _replace_whitelist(whitelist, text))
         return tweets
 
-    async def classify_stock_tweets(self, stock_filter):
+    async def classify_stock_tweets(self, filter, from_date, to_date):
         """
         Classify tweets for stock with given filter
-        :param stock_filter: stock filter (e.g. "AAPL"). \
+        :param filter: stock filter (e.g. "AAPL"). \
           May contain $FROM_USERS$ to limit by only "registered" users (see users table)
-        :type stock_filter: str
+        :type filter: str
+        :param from_date: use tweets since given time
+        :type from_date: datetime.date
+        :param to_date: use tweets until given date
+        :type to_date: datetime.date
         :return: stock id
         :rtype: int
         """
         # Get new tweets
-        logging.info("Classifying new tweets from {0}".format(stock_filter))
-        tweets = await self._get_stock_tweets(stock_filter)
-        logging.info("Downloaded {0} new tweets".format(len(tweets)))
+        full_filter = "{0} since:{1} until:{2}".format(filter, from_date, to_date)
+        logging.info("Classifying new tweets from {0}".format(full_filter))
+        tweets = await self._get_stock_tweets(full_filter)
+        logging.info("Downloaded {0} tweets".format(len(tweets)))
         texts_to_ids, tweet_ids = await db.store_tweets(tweets)
         texts = list(texts_to_ids.keys())
         texts.sort()
@@ -201,7 +204,7 @@ class AppLogic:
         await db.update_classification(classification_records)
         # Map tweets to stock
         logging.info("Mapping to stocks")
-        stock_id = await db.stock_by_filter(stock_filter)
+        stock_id = await db.stock_by_filter(full_filter)
         await db.map_tweets_to_stock(stock_id, tweet_ids)
         return stock_id
 

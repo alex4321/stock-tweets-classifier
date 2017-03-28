@@ -78,30 +78,6 @@ async def store_texts(texts):
     return result
 
 
-async def all_classified_previously(tweets):
-    """
-    Is all tweets classified previously?
-    :param tweets: tweets
-    :type tweets: list[(str, datetime.datetime, int)]
-    :return: is classified?
-    :rtype: bool
-    """
-    async def _builder(cur):
-        texts_mogrified = []
-        for text in unqiue_texts:
-            texts_mogrified.append((await cur.mogrify("(%s)", [text])).decode("utf-8"))
-        sql = "SELECT COUNT(*)=0" + \
-              " FROM ( VALUES " + ",".join(texts_mogrified) + " ) AS data (text) " + \
-              " LEFT JOIN tweet_texts ON tweet_texts.text = data.text" + \
-              " WHERE tweet_texts.text IS NULL"
-        return sql
-
-    texts = [tweet[0] for tweet in tweets]
-    unqiue_texts = list(set(texts))
-    is_classified = (await _query(_builder, _fetchall))[0][0]
-    return is_classified
-
-
 async def find_texts(texts):
     """
     Finf text ids

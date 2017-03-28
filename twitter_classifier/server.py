@@ -62,7 +62,9 @@ def run_server(config_path):
             )
             exclude_neutral = bool(self.get_argument("no_neutral", False))
             assert to_time >= from_time
-            stock_id = await logic.classify_stock_tweets(filter)
+            download_since = from_time.date()
+            download_until = to_time.date()
+            stock_id = await logic.classify_stock_tweets(filter, download_since, download_until)
             positive, negative, neutral = await logic.stock_stats(stock_id, from_time, to_time, exclude_neutral)
             return {
                 "positive": positive,
