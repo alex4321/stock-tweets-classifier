@@ -4,6 +4,7 @@ Twitter client module
 from peony import PeonyClient
 from datetime import datetime, timedelta
 from email.utils import parsedate_tz
+from urllib.request import unquote
 import re
 
 
@@ -34,7 +35,7 @@ class TwitterClient:
         result = {}
         for item in args:
             param, value = item.split("=")
-            result[param] = value
+            result[param] = unquote(value)
         return result
 
     @staticmethod
