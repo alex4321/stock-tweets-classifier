@@ -186,7 +186,9 @@ async def map_tweets_to_stock(stock_id, tweet_ids):
                 [stock_id, tweet_id]
             )).decode("utf-8"))
         return ";".join(insertions)
-    await _query(_builder)
+
+    if len(tweet_ids) != 0:
+        await _query(_builder)
 
 
 async def stock_stats(stock_id, from_time, to_time):
