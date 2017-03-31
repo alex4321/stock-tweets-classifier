@@ -2,6 +2,7 @@
 Application logic.
 """
 import asyncio
+import datetime
 import json
 import logging
 import math
@@ -186,7 +187,7 @@ class AppLogic:
         :rtype: int
         """
         # Get new tweets
-        full_filter = "{0} since:{1} until:{2}".format(filter, from_date, to_date)
+        full_filter = "{0} since:{1} until:{2}".format(filter, from_date, to_date + datetime.timedelta(days=1))
         logging.info("Classifying new tweets from {0}".format(full_filter))
         tweets = await self._get_stock_tweets(full_filter)
         logging.info("Downloaded {0} tweets".format(len(tweets)))
