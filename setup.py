@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='twitter_classifier',
-    version='0.1.4.8',
+    version='0.1.4.9',
     description='Watson-based Twitter sentiment classifier "API"',
     author='Alexander Pozharskiy',
     author_email='gaussmake@gmail.com',
