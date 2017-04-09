@@ -75,8 +75,10 @@ class TwitterClient:
             terminator = nop
         if text_preprocessor is None:
             text_preprocessor = text_nop
+        print("q")
         params = {
-            "q": request
+            "q": request,
+            "count": 30,
         }
         statuses = []
         while True:
@@ -88,11 +90,13 @@ class TwitterClient:
                     status['user']['id'],
                 ),
                 response["statuses"]))
+            print("Loaded {0} new statueses".format(len(new_statuses)))
             statuses += new_statuses
             if "search_metadata" in response and "next_results" in response["search_metadata"]:
                 params = TwitterClient._next_results_params(response["search_metadata"]["next_results"])
             else:
                 break
             if await terminator(new_statuses):
+                print("Downloading terminated")
                 break
         return statuses

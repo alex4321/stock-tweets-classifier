@@ -103,6 +103,29 @@ async def find_texts(texts):
     return result
 
 
+async def get_new_texts(texts):
+    """
+    Find only new texts
+    :param texts: texts
+    :type texts: list[str]
+    :return: list[str]
+    """
+    async def _builder(cur):
+        text_values = []
+        for text in texts:
+            text_values.append((await cur.mogrify("(%s)", [text])).decode("utf-8"))
+        return "SELECT subquery.text FROM (" + \
+               "SELECT * FROM (VALUES " + \
+               ",".join(text_values) + \
+               ") AS t(text)" + \
+               ") AS subquery " + \
+               "LEFT JOIN tweet_texts ON tweet_texts.text = subquery.text " +\
+               "WHERE tweet_texts.id IS NULL"
+    sql_answer = await _query(_builder, _fetchall)
+    texts = list(map(lambda row: row[0],
+                     sql_answer))
+    return texts
+
 async def store_tweets(tweets):
     """
     Store tweets
@@ -271,3 +294,29 @@ async def from_users_filter():
     user_filters = map(lambda name: "from:{0}".format(name),
                        users)
     return list(user_filters)
+
+
+async def all_classified_previously(tweets):
+    """
+    Is all tweets classified previously?
+    :param tweets: tweets
+    :type tweets: list[(str, datetime.datetime, int)]
+    :return: is classified?
+    :rtype: bool
+    """
+    async def _builder(cur):
+        texts_mogrified = []
+        for text in unqiue_texts:
+            texts_mogrified.append((await cur.mogrify("(%s)", [text])).decode("utf-8"))
+        sql = "SELECT COUNT(*)=0" + \
+              " FROM ( VALUES " + ",".join(texts_mogrified) + " ) AS data (text) " + \
+              " LEFT JOIN tweet_texts ON tweet_texts.text = data.text" + \
+              " WHERE tweet_texts.text IS NULL"
+        return sql
+
+    texts = [tweet[0] for tweet in tweets]
+    unqiue_texts = list(set(texts))
+    is_classified = (await _query(_builder, _fetchall))[0][0]
+    return is_classified
+
+

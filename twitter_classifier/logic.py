@@ -134,80 +134,69 @@ class AppLogic:
                 await All(tasks)
         return text_classification_results
 
-    async def _get_stock_tweets(self, stock_filter):
-        def _replace_whitelist(whitelist, text):
-            text = text.lower()
-            for tag in whitelist:
-                text = text.replace("#" + tag, "")
-            return text
+    #async def _get_stock_tweets(self, stock_filter):
+    #    def _replace_whitelist(whitelist, text):
+    #        text = text.lower()
+    #        for tag in whitelist:
+    #            text = text.replace("#" + tag, "")
+    #        return text
+    #
+    #    async def _filter_tweets_download(filters, tweets):
+    #        request = stock_filter.replace(AppLogic.FROM_USERS_FILTER, "") \
+    #                  + " AND (" + " OR ".join(filters) + ")"
+    #        real_tweets = await twitter.search(request,
+    #                                           text_preprocessor=lambda text: _replace_whitelist(whitelist, text))
+    #        for tweet in real_tweets:
+    #            tweets.append(tweet)
+    #
+    #    whitelist = await db.whitelist_hashtags()
+    #    twitter = self.twitter_client()
+    #    tweets = await twitter.search(stock_filter,
+    #                                  terminator=db.all_classified_previously,
+    #                                  text_preprocessor=lambda text: _replace_whitelist(whitelist, text))
+    #    return tweets
 
-        async def _filter_tweets_download(filters, tweets):
-            request = stock_filter.replace(AppLogic.FROM_USERS_FILTER, "") \
-                      + " AND (" + " OR ".join(filters) + ")"
-            real_tweets = await twitter.search(request,
-                                               text_preprocessor=lambda text: _replace_whitelist(whitelist, text))
-            for tweet in real_tweets:
-                tweets.append(tweet)
-
-        whitelist = await db.whitelist_hashtags()
-        twitter = self.twitter_client()
-
-        if AppLogic.FROM_USERS_FILTER in stock_filter:
-            # if we'll download only whitelisted user tweets
-            # we'll make request to Twitter API with users filter ("AND (from:$user1 OR from:$user2... )").
-            # but we'll  need to split it in few batches - e.g. I tryed to add 129 users and got error).
-            # so we build multiple batches that loading tweets and wait for all batch finishing
-            users_filters = await db.from_users_filter()
-            filter_per_block = self.configuration.twitter.user_filter_per_request
-            block_count = math.ceil(len(users_filters) / filter_per_block)
-            tweets = []
-            tasks = []
-            loop = asyncio.get_event_loop()
-            for block in range(0, block_count):
-                block_filters = users_filters[block * filter_per_block: (block + 1) * filter_per_block]
-                task = loop.create_task(_filter_tweets_download(block_filters, tweets))
-                tasks.append(task)
-            await All(tasks)
-        else:
-            tweets = await twitter.search(stock_filter,
-                                          text_preprocessor=lambda text: _replace_whitelist(whitelist, text))
-        return tweets
-
-    async def classify_stock_tweets(self, filter, from_date, to_date):
-        """
-        Classify tweets for stock with given filter
-        :param filter: stock filter (e.g. "AAPL"). \
-          May contain $FROM_USERS$ to limit by only "registered" users (see users table)
-        :type filter: str
-        :param from_date: use tweets since given time
-        :type from_date: datetime.date
-        :param to_date: use tweets until given date
-        :type to_date: datetime.date
-        :return: stock id
-        :rtype: int
-        """
-        # Get new tweets
-        full_filter = "{0} since:{1} until:{2}".format(filter, from_date, to_date + datetime.timedelta(days=1))
-        logging.info("Classifying new tweets from {0}".format(full_filter))
-        tweets = await self._get_stock_tweets(full_filter)
-        logging.info("Downloaded {0} tweets".format(len(tweets)))
-        texts_to_ids, tweet_ids = await db.store_tweets(tweets)
-        texts = list(texts_to_ids.keys())
-        texts.sort()
-        # Classify new tweet texts
-        text_classification_results = await self._classify_texts(texts)
-        # Update text classification
-        logging.info("Updating text classification")
-        classification_records = {}
-        for text, classification in text_classification_results.items():
-            text_id = texts_to_ids[text]
-            classification_records[text_id] = classification
-        await db.update_classification(classification_records)
-        # Map tweets to stock
-        logging.info("Mapping to stocks")
-        stock_id = await db.stock_by_filter(full_filter)
-        await db.map_tweets_to_stock(stock_id, tweet_ids)
-        return stock_id
+    #async def classify_stock_tweets(self, filter, from_date, to_date):
+    #    """
+    #    Classify tweets for stock with given filter
+    #    :param filter: stock filter (e.g. "AAPL"). \
+    #      May contain $FROM_USERS$ to limit by only "registered" users (see users table)
+    #    :type filter: str
+    #    :param from_date: use tweets since given time
+    #    :type from_date: datetime.date
+    #    :param to_date: use tweets until given date
+    #    :type to_date: datetime.date
+    #    :return: stock id
+    #    :rtype: int
+    #    """
+    #    # Get new tweets
+    #    print("Classifying new tweets from {0}".format(from_date))
+    #    tweets = await self._get_stock_tweets(filter)
+    #    print("Downloaded {0} tweets".format(len(tweets)))
+    #    new_texts = await db.get_new_texts([tweet[0] for tweet in tweets])
+    #    print("{0} new text".format(new_texts))
+    #    filtered_tweets = []
+    #    for tweet in tweets:
+    #        if tweet[0] in new_texts:
+    #            filtered_tweets.append(tweet)
+    #    texts_to_ids, tweet_ids = await db.store_tweets(filtered_tweets)
+    #    texts = list(texts_to_ids.keys())
+    #    texts.sort()
+    #    # Classify new tweet texts
+    #    text_classification_results = await self._classify_texts(texts)
+    #    # Update text classification
+    #    logging.info("Updating text classification")
+    #    classification_records = {}
+    #    for text, classification in text_classification_results.items():
+    #        text_id = texts_to_ids[text]
+    #        classification_records[text_id] = classification
+    #    await db.update_classification(classification_records)
+    #    # Map tweets to stock
+    #    print("Mapping to stocks")
+    #    stock_id = await db.stock_by_filter(filter)
+    #    print("Stock id - {0}".format(stock_id))
+    #    await db.map_tweets_to_stock(stock_id, tweet_ids)
+    #    return stock_id
 
     async def stock_stats(self, stock_id, from_time, to_time, exclude_neutral):
         """
