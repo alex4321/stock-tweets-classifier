@@ -6,7 +6,7 @@ import datetime
 import json
 import logging
 import math
-from .db import connect, stocks, stock_stats, store_tweets, stock_by_filter, map_tweets_to_stock, find_texts, update_classification, stocks
+from .db import connect, stocks, stock_stats, store_tweets, stock_by_filter, map_tweets_to_stock, find_texts, update_classification, stocks, whitelist_hashtags
 from twitter_classifier.twitter import TwitterClient
 from .watson_nlc import AsyncNaturalLanguageClassifier, All
 
@@ -133,48 +133,6 @@ class AppLogic:
                 await All(tasks)
         return text_classification_results
 
-    #async def classify_stock_tweets(self, filter, from_date, to_date):
-    #    """
-    #    Classify tweets for stock with given filter
-    #    :param filter: stock filter (e.g. "AAPL"). \
-    #      May contain $FROM_USERS$ to limit by only "registered" users (see users table)
-    #    :type filter: str
-    #    :param from_date: use tweets since given time
-    #    :type from_date: datetime.date
-    #    :param to_date: use tweets until given date
-    #    :type to_date: datetime.date
-    #    :return: stock id
-    #    :rtype: int
-    #    """
-    #    # Get new tweets
-    #    print("Classifying new tweets from {0}".format(from_date))
-    #    tweets = await self._get_stock_tweets(filter)
-    #    print("Downloaded {0} tweets".format(len(tweets)))
-    #    new_texts = await db.get_new_texts([tweet[0] for tweet in tweets])
-    #    print("{0} new text".format(new_texts))
-    #    filtered_tweets = []
-    #    for tweet in tweets:
-    #        if tweet[0] in new_texts:
-    #            filtered_tweets.append(tweet)
-    #    texts_to_ids, tweet_ids = await db.store_tweets(filtered_tweets)
-    #    texts = list(texts_to_ids.keys())
-    #    texts.sort()
-    #    # Classify new tweet texts
-    #    text_classification_results = await self._classify_texts(texts)
-    #    # Update text classification
-    #    logging.info("Updating text classification")
-    #    classification_records = {}
-    #    for text, classification in text_classification_results.items():
-    #        text_id = texts_to_ids[text]
-    #        classification_records[text_id] = classification
-    #    await db.update_classification(classification_records)
-    #    # Map tweets to stock
-    #    print("Mapping to stocks")
-    #    stock_id = await db.stock_by_filter(filter)
-    #    print("Stock id - {0}".format(stock_id))
-    #    await db.map_tweets_to_stock(stock_id, tweet_ids)
-    #    return stock_id
-
     async def stock_stats(self, stock_id, from_time, to_time, exclude_neutral):
         """
         Build stock stats
@@ -202,6 +160,16 @@ class AppLogic:
             return positive / total, negative / total, neutral / total
 
     async def twitter_streams(self):
+        """
+        Run Twitter Streaming processing
+        """
+        def _replace_whitelist(whitelist, text):
+            text = text.lower()
+            for tag in whitelist:
+                text = text.replace("#" + tag, "")
+            return text
+
+        whitelist = await whitelist_hashtags()
         streams = list((await stocks()).values())
         print("Monitoring stocks {0}".format(streams))
         twitter = self.twitter_client()
@@ -227,4 +195,6 @@ class AppLogic:
             await update_classification({text_id: classification})
             print(text, clean_text, time, uid)
 
-        await twitter.stream_handle(tweet_handler, track=",".join(streams))
+        await twitter.stream_handle(tweet_handler,
+                                    lambda text: _replace_whitelist(whitelist, text),
+                                    track=",".join(streams))
