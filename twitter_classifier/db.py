@@ -255,7 +255,9 @@ async def stock_stats(stock_id, from_time, to_time):
               "    LEFT JOIN users ON tweets.uid = users.id " + \
               "    WHERE tweets.time >= %s AND tweets.time <= %s AND tweets_stocks.stock = %s " + \
               "  ) subQuery "
-        return (await cur.mogrify(sql, [from_time, to_time, stock_id])).decode("utf-8")
+        sql_text = (await cur.mogrify(sql, [from_time, to_time, stock_id])).decode("utf-8")
+        print(sql_text)
+        return sql_text
 
     positive, negative, neutral = (await _query(_builder, _fetchall))[0]
     if positive is None:

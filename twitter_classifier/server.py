@@ -46,7 +46,7 @@ class JsonRequestHandler(RequestHandler):
         raise NotImplementedError()
 
 
-def run_server(config_path):
+def run_server(config_path, is_stream_process):
     class StocksHandler(JsonRequestHandler):
         async def _get(self):
             return await logic.stocks()
@@ -63,9 +63,6 @@ def run_server(config_path):
             )
             exclude_neutral = bool(self.get_argument("no_neutral", False))
             assert to_time >= from_time
-            #download_since = from_time.date()
-            #download_until = to_time.date()
-            #stock_id = await logic.classify_stock_tweets(filter, download_since, download_until)
             stock_id = await db.stock_by_filter(filter)
             positive, negative, neutral = await logic.stock_stats(stock_id, from_time, to_time, exclude_neutral)
             return {
@@ -79,13 +76,16 @@ def run_server(config_path):
     logging.basicConfig(level=config.log_level)
     logic = AppLogic(config)
     asyncio.get_event_loop().run_until_complete(logic.initialize())
-    AsyncIOMainLoop().install()
-    application = Application([
-        (r'/stocks', StocksHandler,),
-        ('/stats', StatsHandler,)
-    ])
-    application.listen(config.port)
-    asyncio.get_event_loop().run_forever()
+    if is_stream_process:
+        asyncio.get_event_loop().run_until_complete(logic.twitter_streams())
+    else:
+        AsyncIOMainLoop().install()
+        application = Application([
+            (r'/stocks', StocksHandler,),
+            ('/stats', StatsHandler,)
+        ])
+        application.listen(config.port)
+        asyncio.get_event_loop().run_forever()
 
 
 def main():
@@ -93,4 +93,4 @@ def main():
         config = sys.argv[1]
     else:
         config = os.path.join(os.path.dirname(__file__), "config.json")
-    run_server(config)
+    run_server(config, os.fork() == 0)
