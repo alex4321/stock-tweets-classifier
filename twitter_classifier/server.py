@@ -1,3 +1,5 @@
+import atexit
+import signal
 import asyncio
 import datetime
 import json
@@ -9,17 +11,6 @@ from tornado.platform.asyncio import AsyncIOMainLoop
 from tornado.web import Application, RequestHandler
 from . import db
 from .logic import Configuration, AppLogic
-
-
-#async def main():
-#    config = Configuration.from_file("config.json")
-#    logic = AppLogic(config)
-#    await logic.initialize()
-#    stock_id = await logic.classify_stock_tweets("TWTR")
-#    now = datetime.datetime.now()
-#    start = now - datetime.timedelta(days=10)
-#    print(await logic.stock_stats(stock_id, start, now, False))
-#    print(await logic.stock_stats(stock_id, start, now, True))
 
 
 class JsonRequestHandler(RequestHandler):
@@ -83,7 +74,7 @@ def run_server(config_path, is_stream_process):
         AsyncIOMainLoop().install()
         application = Application([
             (r'/stocks', StocksHandler,),
-            ('/stats', StatsHandler,)
+            (r'/stats', StatsHandler,)
         ])
         application.listen(config.port)
         asyncio.get_event_loop().run_forever()
@@ -94,4 +85,9 @@ def main():
         config = sys.argv[1]
     else:
         config = os.path.join(os.path.dirname(__file__), "config.json")
-    run_server(config, os.fork() == 0)
+    fork_result = os.fork()
+    run_server(config, fork_result == 0)
+    if fork_result != 0:
+        def kill_child():
+            os.kill(fork_result, signal.SIGTERM)
+        atexit.register(kill_child)
