@@ -30,15 +30,6 @@ class TwitterClient:
         self.timeout = timeout
 
     @staticmethod
-    def _next_results_params(next_results_str):
-        args = next_results_str.replace("?", "").split("&")
-        result = {}
-        for item in args:
-            param, value = item.split("=")
-            result[param] = unquote(value)
-        return result
-
-    @staticmethod
     def _clean(text):
         t = re.sub('(#\w+)|(@\w+)|(\$\w+)|(\d+)|(&gt;)|(&lt;)', "", text)
         t = re.sub('(http\S+)', "", t)
