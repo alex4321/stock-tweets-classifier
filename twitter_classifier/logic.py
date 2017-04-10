@@ -99,7 +99,7 @@ class AppLogic:
         return AsyncNaturalLanguageClassifier(self.configuration.nlc.username,
                                               self.configuration.nlc.password)
 
-    async def _classify_texts(self, texts):
+    async def _classify_text(self, text):
         """
         Classify texts
         :param texts: texts
@@ -107,31 +107,10 @@ class AppLogic:
         :return: classification results (text-class dict)
         :rtype: dict[str, str]
         """
-        async def _text_classify(text_classification_results, nlc, text):
-            if text == "":
-                return "neutral"
-            text_classification_results[text] = await nlc.ensemble_classify(
-                self.configuration.nlc.classifiers,
-                text,
-                "neutral"
-            )
-
-        logging.debug("Classifying {0} texts".format(len(texts)))
-        # We'll try to send multiple classifiation request (batches) in same time
-        loop = asyncio.get_event_loop()
-        text_classification_results = {}
-        text_per_block = self.configuration.nlc.text_per_block  # classification batch size
-        with self.nlc() as client:
-            block_count = math.ceil(len(texts) / text_per_block)
-            for block in range(0, block_count):
-                logging.info("Classifyed {0} texts".format(block * text_per_block))
-                block_texts = texts[block * text_per_block:(block + 1) * text_per_block]
-                tasks = []
-                for text in block_texts:
-                    classify_generator = _text_classify(text_classification_results, client, text)
-                    tasks.append(loop.create_task(classify_generator))
-                await All(tasks)
-        return text_classification_results
+        with self.nlc() as nlc:
+            return await nlc.ensemble_classify(self.configuration.nlc.classifiers,
+                                               text,
+                                               "neutral")
 
     async def stock_stats(self, stock_id, from_time, to_time, exclude_neutral):
         """
@@ -190,7 +169,7 @@ class AppLogic:
                     await map_tweets_to_stock(stock_id, tweet_ids)
                     print("Tweet {0} mapped to stock {1} ({2})".format(tweet_id, stock_id, stream))
             text_id = (await find_texts([clean_text]))[clean_text]
-            classification = (await self._classify_texts([clean_text]))[clean_text]
+            classification = await self._classify_text(clean_text)
             print("Tweet {0} has text with ID {1} classified as {2}".format(tweet_id, text_id, classification))
             await update_classification({text_id: classification})
             print(text, clean_text, time, uid)

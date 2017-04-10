@@ -47,6 +47,7 @@ class JsonRequestHandler(RequestHandler):
 
 
 def run_server(config_path, is_stream_process):
+    print("Run server")
     class StocksHandler(JsonRequestHandler):
         async def _get(self):
             return await logic.stocks()
