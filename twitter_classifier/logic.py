@@ -161,6 +161,7 @@ class AppLogic:
             tweet_id = tweet_ids[0]
             print("Stored new tweet with id {0}".format(tweet_ids[0]))
             text_lower = text.lower()
+            mapped_stocks = 0
             for stream in streams:
                 stream_lower = stream.lower()
                 print(text_lower, stream_lower)
@@ -168,12 +169,13 @@ class AppLogic:
                         ('$' + stream_lower) in text_lower:
                     stock_id = await stock_by_filter(stream)
                     await map_tweets_to_stock(stock_id, tweet_ids)
+                    mapped_stocks += 1
                     print("Tweet {0} mapped to stock {1} ({2})".format(tweet_id, stock_id, stream))
-            text_id = (await find_texts([clean_text]))[clean_text]
-            classification = await self._classify_text(clean_text)
-            print("Tweet {0} has text with ID {1} classified as {2}".format(tweet_id, text_id, classification))
-            await update_classification({text_id: classification})
-            print(text, clean_text, time, uid)
+            if mapped_stocks != 0:
+                text_id = (await find_texts([clean_text]))[clean_text]
+                classification = await self._classify_text(clean_text)
+                print("Tweet {0} has text with ID {1} classified as {2}".format(tweet_id, text_id, classification))
+                await update_classification({text_id: classification})
 
         await twitter.stream_handle(tweet_handler,
                                     lambda text: _replace_whitelist(whitelist, text),
