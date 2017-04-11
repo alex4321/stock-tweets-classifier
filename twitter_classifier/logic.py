@@ -164,7 +164,6 @@ class AppLogic:
             mapped_stocks = 0
             for stream in streams:
                 stream_lower = stream.lower()
-                print(text_lower, stream_lower)
                 if ('#' + stream_lower) in text_lower or \
                         ('$' + stream_lower) in text_lower:
                     stock_id = await stock_by_filter(stream)
