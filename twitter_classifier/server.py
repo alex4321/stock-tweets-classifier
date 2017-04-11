@@ -63,7 +63,6 @@ def run_server(config_path, is_stream_process):
                 "neutral": neutral
             }
 
-
     config = Configuration.from_file(config_path)
     logging.basicConfig(level=config.log_level)
     logic = AppLogic(config)
